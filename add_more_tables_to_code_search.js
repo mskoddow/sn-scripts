@@ -1,4 +1,4 @@
-// Execute the following in the "Scripts - Background" console
+// Execute the following code in the "Scripts - Background" console
 
 var grSearchGroup = new GlideRecord('sn_codesearch_search_group');
 
