@@ -6,13 +6,17 @@ var CatalogUtils = Class.create();
  *
  * @class CatalogUtils
  * @author Maik Skoddow
+ * @see https://www.servicenow.com/community/now-platform-articles/clone-requested-items/ta-p/2323321
  */
 CatalogUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	/**
 	 * Returns all variables of a given RITM as stringified array of JSON objectss.
 	 *
-	 * @param {Object} objParameter Valid `sc_req_item` record or String-based Sys ID of a RITM.
-	 * @return {String} Stringified array of JSON objects with various variable values and information or an empty array if no valid data could be found.
+	 * @param {Object} 
+	 *    objParameter Valid `sc_req_item` record or String-based Sys ID of a RITM.
+	 * @return {String} 
+	 *    Stringified array of JSON objects with various variable values and information or an 
+	 *    empty array if no valid data could be found.
 	 */
 	getVariables: function(objParameter) {
 		var _grRITM = null;
