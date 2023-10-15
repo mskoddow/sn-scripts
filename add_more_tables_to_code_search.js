@@ -1,24 +1,23 @@
-// Execute the following code in the "Scripts - Background" console
-
 var grSearchGroup = new GlideRecord('sn_codesearch_search_group');
 
-//get reference to default code search
-if (grSearchGroup.get('name',  'sn_codesearch.Default Search Group')) {
+grSearchGroup.query();
+
+while (grSearchGroup.next()) {
 	var grDictionary        = new GlideRecord('sys_dictionary');
 	var strSearchGroupSysID = grSearchGroup.getValue('sys_id');
 	var objArrayUtil        = new ArrayUtil();
 
 	//retrieve all potential script-related fields from "global" scope
 	grDictionary.addEncodedQuery(
-		'sys_scope=global^' + 
 		'internal_type.nameINscript,condition,condition_string,script_plain,XML,script_server' +
-		'^ORelement=reference_qual^ORelement=calculation' + 
-		'^nameNOT LIKEvar__m_' + 
-		'^NQelementSTARTSWITHscript' + 
+		'^ORelement=reference_qual' +
+		'^ORelement=calculation' +
+		'^NQelementSTARTSWITHscript' +
 		'^ORelementLIKE_script' +
 		'^internal_type.nameSTARTSWITHstring' +
-		'^nameNOT LIKEvar__m_' +
-		'^NQname=sys_variable_value^element=value'
+		'^ORinternal_type.name=json' +
+		'^NQname=sys_variable_value' +
+		'^element=value'
 	);
 
 	grDictionary.query();
@@ -51,7 +50,4 @@ if (grSearchGroup.get('name',  'sn_codesearch.Default Search Group')) {
 			grCodeSearch.insert();
 		}
 	}
-}
-else {
-	gs.error('Default search group "sn_codesearch.Default Search Group" not available!');
 }
