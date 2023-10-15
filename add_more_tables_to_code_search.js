@@ -7,7 +7,6 @@ while (grSearchGroup.next()) {
 	var strSearchGroupSysID = grSearchGroup.getValue('sys_id');
 	var objArrayUtil        = new ArrayUtil();
 
-	//retrieve all potential script-related fields from "global" scope
 	grDictionary.addEncodedQuery(
 		'internal_type.nameINscript,condition,condition_string,script_plain,XML,script_server' +
 		'^ORelement=reference_qual' +
