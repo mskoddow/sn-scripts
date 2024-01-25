@@ -4,8 +4,7 @@ var strTableName = 'wm_task'; //replace with your table name
 grActionInstance
     .addJoinQuery('sys_variable_value', 'sys_id', 'document_key')
     .addCondition('value', strTableName);
-grActionInstance.addAggregate('count'); 
-grActionInstance.orderByAggregate('count'); 
+grActionInstance.addAggregate('GROUP_CONCAT_DISTINCT', 'flow'); 
 grActionInstance.groupBy('flow');
 grActionInstance.addQuery('flow.sys_class_name', 'sys_hub_flow')
 grActionInstance.query();
