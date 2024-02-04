@@ -84,10 +84,12 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun) {
 }
 
 installPluginsAndApplications([		
-	'com.snc.incident.mim', //Major Incident Management
-	'com.snc.change_management.risk_assessment', //Change Risk Assesment
 	'com.glide.messaging.awa', //Conversational Messaging
+	'com.snc.incident.mim', //Major Incident Management
+	'com.snc.change_management.risk_assessment', //Change Management - Risk Assesment
+	'com.snc.change_management.success_probability', //Change Management - Success Probability
 	'com.snc.incident.awa', //Advanced Work Assignment for Incidents
+	'com.snc.incident.universal_request', //Universal Request for Incident Integration
 		
 	'com.glide.cs.chatbot', //Virtual Agent
 	'com.glideapp.cs.sm_topic_blocks', //Service Management Virtual Agent Topic Blocks
@@ -98,6 +100,7 @@ installPluginsAndApplications([
 	'com.snc.financial_planning_pmo', //PPM
 	'com.snc.project_management_v3', //Project Management 
 	'com.snc.sdlc.agile.2.0', //Agile Development
+	'com.snc.sdlc.safe', //Essential SAFe
 	'com.snc.sdlc.agile.multi_task', //Unified Backlog
 	'com.snc.test_management.2.0', //Test Management
 	'com.snc.release_management_v2', //Release Management
@@ -107,17 +110,17 @@ installPluginsAndApplications([
 
 	'com.sn_customerservice', //Customer Service Management
 	'com.sn_communities', //Communities
-	'com.sn_shn', //Special Handling Notes#
+	'com.sn_shn', //Special Handling Notes
 		
 	'com.snc.work_management', //FSM Base
 	'com.snc.service_management.geolocation', //Service Management Geolocation
-	'sn_fsm_disp_wrkspc', //Planned Maintenance
+	'sn_fsm_disp_wrkspc', //Dispatcher Workspace
 	'sn_fsm_pm', //Planned Maintenance
 	'com.sn_fsm_mobile', //Mobile App
 	'com.snc.fsm_capacity_management', //Field Service Capacity and Reservations Management
 	'com.snc.fsm_crew_scheduling', //Field Service Crew Operations
 	'com.snc.time_recording_fsm', //Time Recording
-	'com.snc.work_management.demo', //Demo Data
+	'com.snc.work_management.demo', //FSM Demo Data
 
 	'com.snc.integration.multifactor.authentication', //MFA
 	'com.snc.integration.sso.multi.installer', //SSO
@@ -126,5 +129,5 @@ installPluginsAndApplications([
 	'com.snc.linkgenerator', //Link Generator
 	'com.snc.document_management', //Managed Documents
 	'com.glide.quiz_designer', //Quiz Designer
-	'sn_vsc', //Security Center
+	'sn_vsc', //Security Center	
 ]);
