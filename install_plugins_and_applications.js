@@ -1,3 +1,12 @@
+/**
+* Installs a list of plugins and applications.
+*
+* @author Maik Skoddow
+* @param {Array} arrToBeInstalled
+*	List of plugin IDs or application scope to be installed
+* @param {Boolean} dryRun
+*	If `true` only output is given but no installations are performed
+*/
 function installPluginsAndApplications(arrToBeInstalled, dryRun) {
 
     if (!Array.isArray(arrToBeInstalled) || arrToBeInstalled.length === 0) {
@@ -117,4 +126,5 @@ installPluginsAndApplications([
 	'com.snc.linkgenerator', //Link Generator
 	'com.snc.document_management', //Managed Documents
 	'com.glide.quiz_designer', //Quiz Designer
+	'sn_vsc', //Security Center
 ]);
