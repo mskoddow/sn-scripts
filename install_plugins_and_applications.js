@@ -83,7 +83,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun) {
     }
 }
 
-installPluginsAndApplications([		
+installPluginsAndApplications([
 	'com.glide.messaging.awa', //Conversational Messaging
 	'com.snc.incident.mim', //Major Incident Management
 	'com.snc.change_management.risk_assessment', //Change Management - Risk Assesment
