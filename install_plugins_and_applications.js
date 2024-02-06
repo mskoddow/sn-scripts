@@ -47,7 +47,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun) {
                 _grInstalledApps.name, strID
             );
         }
-        else if (_grRemoteApps.get('scope', strScope)) {
+        else if (_grRemoteApps.get('scope', strID)) {
             _objToBeInstalled[_grRemoteApps.getUniqueValue()] = {
                 "sys_id"    : _grRemoteApps.getUniqueValue(),
                 "app_name"  : _grRemoteApps.getValue('name'),
