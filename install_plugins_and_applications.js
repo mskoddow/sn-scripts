@@ -64,7 +64,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun) {
             );
         }
         else {
-            gs.error('"{0}" is not a valid plugin or application ID!', strScope)
+            gs.error('"{0}" is not a valid plugin or application ID!', strID)
         }
     });
         
