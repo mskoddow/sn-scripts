@@ -1,52 +1,54 @@
-var grSearchGroup = new GlideRecord('sn_codesearch_search_group');
+var _grSearchGroup = new GlideRecord('sn_codesearch_search_group');
 
-grSearchGroup.query();
+_grSearchGroup.query();
 
-while (grSearchGroup.next()) {
-	var grDictionary        = new GlideRecord('sys_dictionary');
-	var strSearchGroupSysID = grSearchGroup.getValue('sys_id');
-	var objArrayUtil        = new ArrayUtil();
+while (_grSearchGroup.next()) {
+    var _strSearchGroupSysID = _grSearchGroup.getValue('sys_id');
+    var _grDictionary        = new GlideRecord('sys_dictionary');
+    var _objArrayUtil        = new ArrayUtil();
 
-	grDictionary.addEncodedQuery(
-		'internal_type.nameINscript,condition,condition_string,script_plain,XML,script_server' +
-		'^ORelement=reference_qual' +
-		'^ORelement=calculation' +
-		'^NQelementSTARTSWITHscript' +
-		'^ORelementLIKE_script' +
-		'^internal_type.nameSTARTSWITHstring' +
-		'^ORinternal_type.name=json' +
-		'^NQname=sys_variable_value' +
-		'^element=value'
-	);
+    _grDictionary.addEncodedQuery(
+            'internal_type.nameINscript,condition,condition_string,script_plain,XML,script_server' +
+        '^NQ' +
+            'elementSTARTSWITHscript' +
+                '^ORelementLIKE_script' +
+            '^internal_type.nameSTARTSWITHstring' +
+                '^ORinternal_type.name=json' +
+        '^NQ' +
+            'name=sys_variable_value^element=value' +
+        '^NQ' +
+            'nameSTARTSWITHsys_dictionary' +
+            '^elementINattributes,default_value,reference_qual,calculation'
+    );
 
-	grDictionary.query();
+    _grDictionary.query();
 
-	while (grDictionary.next()) {
-		var grCodeSearch = new GlideRecord('sn_codesearch_table');
-		var strTable     = grDictionary.getValue('name');
-		var strField     = grDictionary.getValue('element');
+    while (_grDictionary.next()) {
+        var _grCodeSearch = new GlideRecord('sn_codesearch_table');
+        var _strTable     = _grDictionary.getValue('name');
+        var _strField     = _grDictionary.getValue('element');
 
-		grCodeSearch.addQuery('table', strTable);
-		grCodeSearch.addQuery('search_group', strSearchGroupSysID);
-		grCodeSearch.setLimit(1);
-		grCodeSearch.query();
+        _grCodeSearch.addQuery('table', _strTable);
+        _grCodeSearch.addQuery('search_group', _strSearchGroupSysID);
+        _grCodeSearch.setLimit(1);
+        _grCodeSearch.query();
 
-		//for the respective table there is already a record available
-		if (grCodeSearch.next()) {
-			var arrFields = grCodeSearch.getValue('search_fields').split(',');
+        //for the respective table there is already a record available
+        if (_grCodeSearch.next()) {
+            var _arrFields = _grCodeSearch.getValue('search_fields').split(',');
 
-			arrFields.push(strField);
+            _arrFields.push(_strField);
 
-			grCodeSearch.setValue('search_fields', objArrayUtil.unique(arrFields).join(','));
-			grCodeSearch.update();
-		}
-		// create a new record at table "sn_codesearch_table"
-		else {
-			grCodeSearch.initialize();
-			grCodeSearch.setValue('table', strTable);
-			grCodeSearch.setValue('search_group', strSearchGroupSysID);
-			grCodeSearch.setValue('search_fields', strField);
-			grCodeSearch.insert();
-		}
-	}
+            _grCodeSearch.setValue('search_fields', _objArrayUtil.unique(_arrFields).join(','));
+            _grCodeSearch.update();
+        }
+        // create a new record at table "sn_codesearch_table"
+        else {
+            _grCodeSearch.initialize();
+            _grCodeSearch.setValue('table', _strTable);
+            _grCodeSearch.setValue('search_group', _strSearchGroupSysID);
+            _grCodeSearch.setValue('search_fields', _strField);
+            _grCodeSearch.insert();
+        }
+    }
 }
