@@ -6,14 +6,17 @@
 *    List of plugin IDs or application scope to be installed
 * @param {Boolean} dryRun
 *    If `true` only output is given but no installations are performed
+* @param {Boolean} loadDemoData
+*    If `false` demo data is not installed
 */
-function installPluginsAndApplications(arrToBeInstalled, dryRun) {
+function installPluginsAndApplications(arrToBeInstalled, dryRun, loadDemoData) {
 
     if (!Array.isArray(arrToBeInstalled) || arrToBeInstalled.length === 0) {
         gs.error('Parameter "arrToBeInstalled" does not represent a valid array!');
     }
 
     var _dryRun           = typeof dryRun === 'boolean' ? dryRun : false;
+    var _loadDemoData     = typeof loadDemoData === 'boolean' ? dryRun : true;
     var _objToBeInstalled = {};
     var _grPlugins        = new GlideRecord('v_plugin');
     var _grRemoteApps     = new GlideRecord('sys_remote_app');
@@ -32,6 +35,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun) {
                     "plugin_id" : strID,
                     "scope"     : _grPlugins.getValue('scope'),
                     "app_name"  : _grPlugins.getValue('name'),
+                    "loadDemoData" : _loadDemoData,
                     "isPlugin"  : true
                 }
 
@@ -51,6 +55,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun) {
             _objToBeInstalled[_grRemoteApps.getUniqueValue()] = {
                 "sys_id"    : _grRemoteApps.getUniqueValue(),
                 "app_name"  : _grRemoteApps.getValue('name'),
+                "loadDemoData": _loadDemoData,
                 "isStoreApp": true,
                 "appScope"  : strID,
                 "versionObj": {
