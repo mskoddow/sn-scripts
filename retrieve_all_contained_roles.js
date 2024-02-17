@@ -2,9 +2,9 @@ var _grRole = new GlideRecord('sys_user_role');
 
 //retrieve all contained roles from the role hierarchy for the "admin" role
 if (_grRole.get('name', 'admin')) {
-	gs.info('Retrieve all contained roles for "{0}" ...', _grRole.name);
+    gs.info('Retrieve all contained roles for "{0}" ...', _grRole.name);
     
-	var _itRoleSysIDs = 
+    var _itRoleSysIDs = 
         new SNC.RoleManagementAPI()
             .findAllContainedRolesForRole(_grRole.getUniqueValue())
             .iterator();
