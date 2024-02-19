@@ -17,6 +17,8 @@ while (_grSearchGroup.next()) {
         '^NQ' +
             'name=sys_variable_value^element=value' +
         '^NQ' +
+            'name=sys_properties^element=value' +
+        '^NQ' +
             'nameSTARTSWITHsys_dictionary' +
             '^elementINattributes,default_value,reference_qual,calculation'
     );
