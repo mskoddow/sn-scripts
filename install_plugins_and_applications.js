@@ -73,17 +73,25 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun, loadDemoData) {
         }
     });
         
-    gs.info(
-        'Start installation of {0} plugins and applications... ',
-        Object.keys(_objToBeInstalled).length
-    );
-
-    if (!_dryRun) {
+    if( Object.keys(_objToBeInstalled).length > 0 ) {
         gs.info(
-            new sn_appclient.AppPluginInstallation().validateAndBatchInstall(
-                'PDI Installation', 
-                _objToBeInstalled
-            )
+            'Start installation of {0} plugins and applications... ',
+            Object.keys(_objToBeInstalled).length
+        );
+        if (!_dryRun) {
+            gs.info(
+                new sn_appclient.AppPluginInstallation().validateAndBatchInstall(
+                    'PDI Installation', 
+                    _objToBeInstalled
+                )
+            );
+            gs.info(
+                'To follow the installation progress, go to sys_batch_install_plan: https://{0}.service-now.com/now/nav/ui/classic/params/target/sys_batch_install_plan_list.do', gs.getProperty('instance_name')
+            );
+        }
+    } else {
+        gs.info(
+            'No plugins or applications will be installed...'
         );
     }
 }
