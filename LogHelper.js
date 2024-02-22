@@ -86,8 +86,10 @@ LogHelper.fatal = function(strScope, strMessage, e) {
 
 
 LogHelper._getMessageStr = function(arrArguments) {
-	var _args = [];
+	var _args       = [];
+	var _arrMessage = [];
 	var _e;
+
   
 	for (var numIndex = 0; numIndex < arrArguments.length; numIndex++) {
 		if (arrArguments[numIndex] !== null && arrArguments[numIndex] !== 'undefined') {
@@ -101,43 +103,53 @@ LogHelper._getMessageStr = function(arrArguments) {
 	}
   
 	var _strFullNodeName   = global.GlideServlet.getSystemID();
-	var _numSeparatorIndex = _strFullNodeName.indexOf(':');
-	
+	var _numSeparatorIndex = _strFullNodeName.indexOf(':');	
 	var _strShortNodeName  = 
 		_numSeparatorIndex > 0 ?
 			_strFullNodeName.substr(_numSeparatorIndex + 1) : 
 			_strFullNodeName;	
  
-	var _strMessage = 
-		'[' +
-		(_args.length === 0 ? _strShortNodeName : _strShortNodeName + '::' + _args[0].toString()) +
-		'] ' +
-		(_args.length < 2 ? '???' : _args[1].toString());
-  
+
+	_arrMessage.push('[');
+	_arrMessage.push(
+		_args.length === 0 ? _strShortNodeName : _strShortNodeName + '::' + _args[0].toString()
+	);
+	_arrMessage.push('] ');
+
+
+	var _strMessage = _args.length < 2 ? '???' : _args[1].toString();
   
 	for (var _numIndex = 2; _numIndex < _args.length; _numIndex++) {
 		var _strValue = JSUtil.nil(_args[_numIndex]) ? '' : _args[_numIndex].toString();
 		
 		_strMessage = _strMessage.replace(new RegExp('{' + (_numIndex - 2) + '}', 'g'), _strValue);
 	}
+
+	_arrMessage.push(_strMessage);
+
   
 	if (_e) {
-		_strMessage = 
-			_strMessage + '\n--> ' + 
-			_e.message + '\n' + 
-			_e.stack
-				.split('\n')
-				.slice(0, 4)
-				.filter(function(line) {
-					return line.trim().length > 0;
-				})
-				.map(function (line) {
-					return '----> ' + line.trim();
-				})
-				.join('\n');
+		_arrMessage.push('\n--> ');
+		_arrMessage.push(_e.message);
+		_arrMessage.push('\n');
+
+		if (_e.stack) {
+			_arrMessage.push(
+				_e.stack
+					.split('\n')
+					.slice(0, 4)
+					.filter(function(line) {
+						return line.trim().length > 0;
+					})
+					.map(function (line) {
+						return '---> ' + line.trim();
+					})
+					.join('\n')
+			);
+		}
 	}
 
-	return _strMessage;
+	return _arrMessage.join('');
 };
 
 
