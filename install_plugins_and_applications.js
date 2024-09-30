@@ -16,7 +16,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun, loadDemoData) {
     }
 
     var _dryRun           = typeof dryRun === 'boolean' ? dryRun : false;
-    var _loadDemoData     = typeof loadDemoData === 'boolean' ? dryRun : true;
+    var _loadDemoData     = typeof loadDemoData === 'boolean' ? loadDemoData : false;
     var _objToBeInstalled = {};
     var _grPlugins        = new GlideRecord('v_plugin');
     var _grRemoteApps     = new GlideRecord('sys_remote_app');
