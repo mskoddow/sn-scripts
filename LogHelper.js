@@ -2,162 +2,290 @@ var LogHelper = Class.create();
 
 /**
 * Server side helper class for logging purposes. This class supports a debug mode. 
-* If enabled via system property or directly debug log statements are written to Sys Log.
+* If enabled via system property log statements are written to Sys Log.
 *
 * @class LogHelper
 * @author Maik Skoddow
 * @see https://www.servicenow.com/community/developer-articles/just-another-log-helper/ta-p/2315453
 */
 LogHelper.prototype = {
+
+	initialize: function(
+		strTableName
+	) {
+		this._strTableName = strTableName;
+
+		if (!gs.tableExists(strTableName)) {
+			throw new Error(
+				'Table "' + strTableName + '" does not exist in that instance!'
+			);
+		}
+
+		var _strAbsoluteBase = 
+			String(GlideDBObjectManager.get().getAbsoluteBase(strTableName));
+
+		if (_strAbsoluteBase !== 'syslog') {
+			throw new Error(
+				'Table "' + strTableName + '" is not a child of the "syslog" table!'
+			);
+		}
+	},
+
+
+	debug: function(
+		strSource, 
+		strMessage		
+	) {
+		if (gs.getProperty(LogHelper.DEBUG_PROPERTY, "false") === "true") {
+			return LogHelper._insertLogRow(
+				this._strTableName, 
+				LogHelper.LOG_LEVELS.DEBUG, 
+				strSource, 
+				LogHelper._getMessageStr(arguments) || strMessage
+			);
+		}
+
+		return '';
+	},
+
+
+	info: function(
+		strSource, 
+		strMessage		
+	) {
+		return LogHelper._insertLogRow(
+			this._strTableName, 
+			LogHelper.LOG_LEVELS.INFO, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	},
+
+
+	warn: function(
+		strSource, 
+		strMessage		
+	) {
+		return LogHelper._insertLogRow(
+			this._strTableName, 
+			LogHelper.LOG_LEVELS.WARN, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	},
+
+
+	error: function(
+		strSource, 
+		strMessage		
+	) {
+		return LogHelper._insertLogRow(
+			this._strTableName, 
+			LogHelper.LOG_LEVELS.ERROR, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	},
+
+
+	fatal: function(
+		strSource, 
+		strMessage		
+	) {
+		return LogHelper._insertLogRow(
+			this._strTableName, 
+			LogHelper.LOG_LEVELS.FATAL, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	},
+
+
 	type: 'LogHelper'
 };
+
 
 //name for system property that is checked whether debug mode is enabled 
 LogHelper.DEBUG_PROPERTY = 'loghelper.enable.debug';
 
-//Value of the "Source" column at table "syslog"
-LogHelper._source = "ACME";
+//target tabe if used with static methods 
+LogHelper.STANDARD_LOG_TABLE = 'syslog';
 
-
-/*
-* Writes a log message to system log of type 'info' and with a given scope in case debug mode is enabled.
-*/
-LogHelper.debug = function(strScope, strMessage) {
-	var _strDebugProperty = gs.getProperty(LogHelper.DEBUG_PROPERTY, "false");
-	
-	if (_strDebugProperty && _strDebugProperty == "true") {
-		var _strMessage = LogHelper._getMessageStr(arguments);
-
-		LogHelper._insertSysLogRow('-1', _strMessage);
-
-		return _strMessage;
-	}
-	
-	return "";
+LogHelper.LOG_LEVELS = {
+    DEBUG : '-1',
+    INFO  : '0',
+    WARN  : '1',
+    ERROR : '2',
+    FATAL : '3'
 };
 
 
-/*
-* Writes a log message to system log of type 'info' and with a given scope.
-*/
-LogHelper.info = function(strScope, strMessage) {
-	var _strMessage = LogHelper._getMessageStr(arguments);
-
-	LogHelper._insertSysLogRow('0', _strMessage);
-
-	return _strMessage;
-};
-
-
-/*
-* Writes a log message to system log of type 'warn' and with a given scope.
-*/
-LogHelper.warn = function(strScope, strMessage) {
-	var _strMessage = LogHelper._getMessageStr(arguments);
-
-	LogHelper._insertSysLogRow('1', _strMessage);
-
-	return _strMessage;
-};
-
-
-/*
-* Writes a log message to system log of type 'error' and with a given scope.
-*/
-LogHelper.error = function(strScope, strMessage) {
-	var _strMessage = LogHelper._getMessageStr(arguments);
-
-	LogHelper._insertSysLogRow('2', _strMessage);
-
-	return _strMessage;
-};
-
-/*
- * Writes a log message to system log of type 'error' and with a given scope. Addtionally 
- * provided exception {e} is written to system log.
-*/
-LogHelper.fatal = function(strScope, strMessage, e) {
-	var _strMessage = LogHelper._getMessageStr(arguments);
-
-	LogHelper._insertSysLogRow('3', _strMessage);
-
-	return _strMessage;
-};
-
-
-LogHelper._getMessageStr = function(arrArguments) {
-	var _args       = [];
-	var _arrMessage = [];
-	var _e;
-
-  
-	for (var numIndex = 0; numIndex < arrArguments.length; numIndex++) {
-		if (arrArguments[numIndex] !== null && arrArguments[numIndex] !== 'undefined') {
-			if (arrArguments[numIndex] instanceof Error) {
-				_e = arrArguments[numIndex];
-			}
-			else {
-				_args.push(arrArguments[numIndex]);
-			}
-		}
-	}
-  
-	var _strFullNodeName   = global.GlideServlet.getSystemID();
-	var _numSeparatorIndex = _strFullNodeName.indexOf(':');	
-	var _strShortNodeName  = 
-		_numSeparatorIndex > 0 ?
-			_strFullNodeName.substr(_numSeparatorIndex + 1) : 
-			_strFullNodeName;	
- 
-
-	_arrMessage.push('[');
-	_arrMessage.push(
-		_args.length === 0 ? _strShortNodeName : _strShortNodeName + '::' + _args[0].toString()
-	);
-	_arrMessage.push('] ');
-
-
-	var _strMessage = _args.length < 2 ? '???' : _args[1].toString();
-  
-	for (var _numIndex = 2; _numIndex < _args.length; _numIndex++) {
-		var _strValue = JSUtil.nil(_args[_numIndex]) ? '' : _args[_numIndex].toString();
-		
-		_strMessage = _strMessage.replace(new RegExp('{' + (_numIndex - 2) + '}', 'g'), _strValue);
-	}
-
-	_arrMessage.push(_strMessage);
-
-  
-	if (_e) {
-		_arrMessage.push('\n--> ');
-		_arrMessage.push(_e.message);
-		_arrMessage.push('\n');
-
-		if (_e.stack) {
-			_arrMessage.push(
-				_e.stack
-					.split('\n')
-					.slice(0, 4)
-					.filter(function(line) {
-						return line.trim().length > 0;
-					})
-					.map(function (line) {
-						return '---> ' + line.trim();
-					})
-					.join('\n')
+LogHelper.debug = 
+	function(
+		strSource, 
+		strMessage
+	) {
+		if (gs.getProperty(LogHelper.DEBUG_PROPERTY, "false") === "true") {
+			return LogHelper._insertLogRow(
+				LogHelper.STANDARD_LOG_TABLE, 
+				LogHelper.LOG_LEVELS.DEBUG, 
+				strSource, 
+				LogHelper._getMessageStr(arguments) || strMessage
 			);
 		}
-	}
 
-	return _arrMessage.join('');
-};
+		return '';
+	};
 
 
-LogHelper._insertSysLogRow = function(strLevel, strMessage) {	
-	var grSysLog = new GlideRecord('syslog');
+LogHelper.info = 
+	function(
+		strSource, 
+		strMessage
+	) {
+		return LogHelper._insertLogRow(
+			LogHelper.STANDARD_LOG_TABLE, 
+			LogHelper.LOG_LEVELS.INFO, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	};
+
+
+LogHelper.warn = 
+	function(
+		strSource, 
+		strMessage
+	) {
+		return LogHelper._insertLogRow(
+			LogHelper.STANDARD_LOG_TABLE, 
+			LogHelper.LOG_LEVELS.WARN, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	};
+
+
+LogHelper.error = 
+	function(
+		strSource, 
+		strMessage
+	) {
+		return LogHelper._insertLogRow(
+			LogHelper.STANDARD_LOG_TABLE, 
+			LogHelper.LOG_LEVELS.ERROR, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	};
+
+
+LogHelper.fatal = 
+	function(
+		strSource, 
+		strMessage
+	) {
+		return LogHelper._insertLogRow(
+			LogHelper.STANDARD_LOG_TABLE, 
+			LogHelper.LOG_LEVELS.FATAL, 
+			strSource, 
+			LogHelper._getMessageStr(arguments) || strMessage
+		);
+	};
+
+
+LogHelper._getMessageStr = 
+	function(
+		arrArguments
+	) {
+		var _args       = [];
+		var _arrMessage = [];
+		var _e;
+
+		for (var numIndex = 1; numIndex < arrArguments.length; numIndex++) {
+			if (arrArguments[numIndex] !== null && 
+				arrArguments[numIndex] !== 'undefined'
+			) {
+				if (arrArguments[numIndex] instanceof Error	||
+					String(arrArguments[numIndex]).startsWith('org.mozilla.javascript.')
+				) {
+					_e = arrArguments[numIndex];
+				}
+				else {
+					_args.push(arrArguments[numIndex]);
+				}
+			}
+		}
 	
-	grSysLog.setValue('level', strLevel);
-	grSysLog.setValue('message', strMessage);
-	grSysLog.setValue('source', LogHelper._source);
-	grSysLog.insert();	
-};
+
+		var _strMessage = 
+			_args.length < 1 ? 
+				'???' : 
+				_args[0].toString();
+	
+		for (var _numIndex = 1; _numIndex < _args.length; _numIndex++) {
+			var _strValue = 
+				JSUtil.nil(_args[_numIndex]) ? 
+					'' : 
+					_args[_numIndex].toString();
+			
+			_strMessage = 
+				_strMessage.replace(
+					new RegExp('{' + (_numIndex - 1) + '}', 'g'), 
+					_strValue
+				);
+		}
+
+		_arrMessage.push(_strMessage);
+
+	
+		if (_e) {
+			_arrMessage.push('\n--> ');
+			
+			if (_e instanceof Error) {
+				_arrMessage.push(_e.message);
+				_arrMessage.push('\n');
+
+				if (_e.stack) {
+					_arrMessage.push(
+						_e.stack
+							.split('\n')
+							.slice(0, 4)
+							.filter(function(line) {
+								return line.trim().length > 0;
+							})
+							.map(function (line) {
+								return '---> ' + line.trim();
+							})
+							.join('\n')
+					);
+				}
+			}
+			else {
+				_arrMessage.push(String(_e));
+			}
+		}
+
+		return _arrMessage.join('');
+	};
+
+
+LogHelper._insertLogRow = 
+	function(
+		strTableName,
+		strLevel, 
+		strSource, 
+		strMessage
+	) {	
+		var _grLog      = new GlideRecord(strTableName);
+		var _strNextSeq = GlideCounter.next(strTableName + '::sequence');
+		
+		_grLog.setValue('level', strLevel);
+		_grLog.setValue('source', strSource);
+		_grLog.setValue('message', strMessage);
+		_grLog.setValue('sequence', _strNextSeq);
+
+		_grLog.insert();
+
+		return strMessage;
+	};
