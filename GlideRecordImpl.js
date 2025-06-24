@@ -1,17 +1,41 @@
 var GlideRecordImpl = Class.create();
 
 /**
- * This Script Include serves as a comprehensive proxy wrapper around ServiceNow's 
- * out-of-the-box GlideRecord class, providing enhanced functionality, improved error handling
- * and additional safety mechanisms. It can be used as a base class for your own 
- * data access and business objects.
+ * This Script Include serves as a comprehensive facade around ServiceNow's 
+ * out-of-the-box `GlideRecord` class, providing enhanced functionality, improved 
+ * error handling and additional safety mechanisms. It can be used as a base class 
+ * for your own data access and business objects.
+ * 
+ * **Please note:**
+ * - Please bear in mind that this class is only a starting point and may need to be 
+ * extended or adapted by you.
+ * - The source code incorporates language elements from the ECMAScript 2021 engine, 
+ * like `const` or string literals.
+ * - Only `GlideRecord` methods related to single-record access are wrapped. Bulk or 
+ * list-based operations are intentionally excluded, as such scenarios are better 
+ * addressed using a different design pattern, for example, the "Repository Pattern".
  * 
  * @author Maik Skoddow (https://www.linkedin.com/in/maik-skoddow)
- * @version 1.0.1
+ * @version 1.1.0
  * @see {@link https://www.linkedin.com/pulse/servicenow-deployment-pipeline-part-5-programming-worth-skoddow-huxee/}
  */
 GlideRecordImpl.prototype = {
 
+	/**
+	 * This constructor is invoked to instantiate new objects from that class.
+	 * 
+	 * There are three different ways of constructing a new object:
+	 * 
+	 * @example
+	 * // (1) with an existing GlideRecord instance (e.g. in a Business Rule)
+	 * var objIncident = new GlideRecordImpl(current);
+	 * 
+	 * // (2) only with a table name (creates a new record that can be inserted)
+	 * var objIncident = new GlideRecordImpl('incident');
+	 * 
+	 * // (3) with table name and Sys ID (loads an existing record)
+	 * var objIncident = new GlideRecordImpl('incident', 'b3af7471c31a6a90108c78edd40131aa');
+	 */
 	initialize: function(
 		param1, 
 		param2
@@ -91,17 +115,26 @@ GlideRecordImpl.prototype = {
 	// public Methods
 	//-------------------------------------------------------------------------------------------
 
-
+	/**
+	 * Provide a human-readable string representation of the created object, 
+	 * typically for debugging, logging, or display purposes.
+	 * 
+	 * @returns {string}
+	 * Some technical information about the GlideRecord instance that this object is 
+	 * the facade for.
+	 */
 	toString: function(
 
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.toString] ';
 
 		return '' +
-			`Facde for a GlideRecord instance:\n` +
-			`Table: ${this.getTableName()}\n` +
-			`Sys ID: ${this.getSysID()}\n` +
-			`is new: ${this.isNewRecord()}\n`;
+			`Facade for a GlideRecord instance:\n` +
+			`Instantiated class: "${this.type}"\n` +
+			`Record table: ${this.getTableName()} (${this.getLabel()})\n` +
+			`Record Sys ID: ${this.getSysID()}\n` +
+			`Record is new: ${this.isNewRecord()}\n` +
+			`Record is deleted: ${this.isDeletedRecord()}\n`;
 	},
 
 
@@ -119,7 +152,7 @@ GlideRecordImpl.prototype = {
 
 
 	/**
-	 * Determines whether the referenced GlideRecord instance is valid.
+	 * Determines if the referenced GlideRecord instance is valid.
 	 * 
 	 * @returns {boolean}
 	 * `true` if the referenced GlideRecord instance is valid, otherwise `false`.
@@ -134,7 +167,7 @@ GlideRecordImpl.prototype = {
 
 
 	/**
-	 * Determines whether the specified field is defined in the table the 
+	 * Determines if the specified field is defined in the table the 
 	 * internally referenced GlideRecord instance was intialized for.
 	 * 
 	 * @param {string} strFieldName
@@ -160,7 +193,7 @@ GlideRecordImpl.prototype = {
 
 
 	/**
-	 * Determines whether the underlying record has been inserted into the database or not.
+	 * Determines if the underlying record has been inserted into the database or not.
 	 *  
 	 * @returns {boolean}
 	 * `true` if the underlying record was not already inserted 
@@ -174,7 +207,7 @@ GlideRecordImpl.prototype = {
 
 
 	/**
-	 * Determines whether the underlying record was deleted.
+	 * Determines if the underlying record was deleted.
 	 *  
 	 * @returns {boolean}
 	 * `true` if record was deleted, otherwise `false`.
@@ -187,86 +220,130 @@ GlideRecordImpl.prototype = {
 
 
 	/**
-	 * Determines whether the access control rules (which includes the user's role) 
-	 * permit reading records in this table.
+	 * Determines if the access control rules permit reading records in this table
+	 * or - if specified - in the associated field.
 	 *
-	 * @returns {boolean}
-	 * `true` if reading the record is permitted, otherwise `false`.
+	 * @param [string] strFieldName
+	 * If specified `strFieldName` must represent a column in the underlying table.
+
+	 * @returns {boolean} 
+	 * `true` if reading records or values in the specified field is 
+	 * permitted, otherwise `false`.
 	 * 
 	 * @throws {Error}
-	 * If the underlying record already was deleted before.
+	 * - If the underlying record already was deleted before.
+	 * - If the specified field name does not represent a valid database column. 
 	 */
 	canRead: function(
-
+		strFieldName
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.canRead] ';
 
 		this._testIsDeleted(METHOD_NAME);
 
-		return this.getGlideRecord().canRead();
+		if (arguments.length === 0) {
+			return this.getGlideRecord().canRead();
+		}
+
+		this._testFieldName(METHOD_NAME, strFieldName);
+
+		return this.getGlideRecord().getElement(strFieldName).canRead();
 	},
 
 
 	/**
-	 * Determines whether the access control rules (which includes the user's role) 
-	 * permit updates to records in this table.
+	 * Determines if the access control rules permit updating records in this table
+	 * or - if specified - in the associated field.
 	 *
+	 * @param [string] strFieldName
+	 * If specified `strFieldName` must represent a column in the underlying table.
+
 	 * @returns {boolean} 
-	 * `true` if updating the record is permitted, otherwise `false`.
+	 * `true` if updating records or values in the specified field is 
+	 * permitted, otherwise `false`.
 	 * 
 	 * @throws {Error}
-	 * If the underlying record already was deleted before.
+	 * - If the underlying record already was deleted before.
+	 * - If the specified field name does not represent a valid database column. 
 	 */
 	canWrite: function(
-
+		strFieldName
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.canWrite] ';
 
 		this._testIsDeleted(METHOD_NAME);
 
-		return this.getGlideRecord().canWrite();
+		if (arguments.length === 0) {
+			return this.getGlideRecord().canWrite();
+		}
+
+		this._testFieldName(METHOD_NAME, strFieldName);
+
+		return this.getGlideRecord().getElement(strFieldName).canWrite();
 	},
 
 
 	/**
-	 * Determines whether the access control rules (which includes the user's role) 
-	 * permit creating records in this table.
+	 * Determines if the access control rules permit creating records in this table
+	 * or - if specified - in the associated field.
 	 *
+	 * @param [string] strFieldName
+	 * If specified `strFieldName` must represent a column in the underlying table.
+
 	 * @returns {boolean} 
-	 * `true` if creating new records is permitted, otherwise `false`.
+	 * `true` if creating new records or values in the specified field is 
+	 * permitted, otherwise `false`.
 	 * 
 	 * @throws {Error}
-	 * If the underlying record already was deleted before.
+	 * - If the underlying record already was deleted before.
+	 * - If the specified field name does not represent a valid database column. 
 	 */
 	canCreate: function(
-
+		strFieldName
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.canCreate] ';
 
 		this._testIsDeleted(METHOD_NAME);
 
-		return this.getGlideRecord().canCreate();
+		if (arguments.length === 0) {
+			return this.getGlideRecord().canCreate();
+		}
+
+		this._testFieldName(METHOD_NAME, strFieldName);
+
+		return this.getGlideRecord().getElement(strFieldName).canCreate();
 	},
 
 
 	/**
-	 * Determines whether the access control rules (which includes the user's role) 
-	 * permit deletion of records in this table.
+	 * Determines if the access control rules permit deleting records in this table
+	 * or - if specified - in the associated field.
 	 *
+	 * @param [string] strFieldName
+	 * If specified `strFieldName` must represent a column in the underlying table.
+
 	 * @returns {boolean} 
-	 * `true` if deleting the record is permitted, otherwise `false`.
+	 * `true` if deleting records or values in the specified field is 
+	 * permitted, otherwise `false`.
 	 * 
 	 * @throws {Error}
-	 * If the underlying record already was deleted before.
+	 * - If the underlying record already was deleted before.
+	 * - If the specified field name does not represent a valid database column. 
 	 */
 	canDelete: function(
-
+		strFieldName
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.canDelete] ';
 
 		this._testIsDeleted(METHOD_NAME);
 
-		return this.getGlideRecord().canDelete();
+		if (arguments.length === 0) {
+			return this.getGlideRecord().canDelete();
+		}
+
+		this._testFieldName(METHOD_NAME, strFieldName);
+
+		return this.getGlideRecord().getElement(strFieldName).canDelete();
 	},
 
 
@@ -280,7 +357,7 @@ GlideRecordImpl.prototype = {
 	 * If the underlying record already was deleted before.
 	 */
 	getTableName: function(
-
+		
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.getTableName] ';
 
@@ -379,11 +456,12 @@ GlideRecordImpl.prototype = {
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.getDisplayValue] ';
 
+		this._testIsDeleted(METHOD_NAME);
+
 		if (arguments.length === 0) {
 			return String(this.getGlideRecord().getDisplayValue());
 		}
 
-		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return String(this.getGlideRecord().getElement(strFieldName).getDisplayValue());
@@ -538,7 +616,7 @@ GlideRecordImpl.prototype = {
 	
 	
 	/**
-	 * Determines whether the specified field is defined has a value. 
+	 * Determines if the specified field is defined has a value. 
 	 * 
 	 * @param {string} strFieldName
 	 * Name of the field to check.
