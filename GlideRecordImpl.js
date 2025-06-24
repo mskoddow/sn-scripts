@@ -1,9 +1,9 @@
 var GlideRecordImpl = Class.create();
 
 /**
- * This Script Include serves as a comprehensive proxy wrapper around ServiceNow's 
+ * This Script Include serves as a comprehensive facade around ServiceNow's 
  * out-of-the-box GlideRecord class, providing enhanced functionality, improved error handling
- * and additional safety mechanisms. It can be used as a base class for your own 
+ * and additional safety mechanisms. It can be used as a base class for building your own 
  * data access and business objects.
  * 
  * @author Maik Skoddow (https://www.linkedin.com/in/maik-skoddow)
@@ -12,7 +12,7 @@ var GlideRecordImpl = Class.create();
  */
 GlideRecordImpl.prototype = {
 
-  initialize: function(
+	initialize: function(
 		param1, 
 		param2
 	) {
