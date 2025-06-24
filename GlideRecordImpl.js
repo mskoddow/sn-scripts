@@ -1,13 +1,13 @@
 var GlideRecordImpl = Class.create();
 
 /**
- * This Script Include serves as a comprehensive facade around ServiceNow's 
+ * This Script Include serves as a comprehensive proxy wrapper around ServiceNow's 
  * out-of-the-box GlideRecord class, providing enhanced functionality, improved error handling
- * and additional safety mechanisms. It can be used as a base class for building your own 
+ * and additional safety mechanisms. It can be used as a base class for your own 
  * data access and business objects.
  * 
  * @author Maik Skoddow (https://www.linkedin.com/in/maik-skoddow)
- * @version 1.0.0
+ * @version 1.0.1
  * @see {@link https://www.linkedin.com/pulse/servicenow-deployment-pipeline-part-5-programming-worth-skoddow-huxee/}
  */
 GlideRecordImpl.prototype = {
@@ -97,7 +97,11 @@ GlideRecordImpl.prototype = {
 	) {
 		const METHOD_NAME = '[GlideRecordImpl.toString] ';
 
-		return 'GlideRecord instance for table "' + this.getTableName() + '"';
+		return '' +
+			`Facde for a GlideRecord instance:\n` +
+			`Table: ${this.getTableName()}\n` +
+			`Sys ID: ${this.getSysID()}\n` +
+			`is new: ${this.isNewRecord()}\n`;
 	},
 
 
@@ -131,7 +135,7 @@ GlideRecordImpl.prototype = {
 
 	/**
 	 * Determines whether the specified field is defined in the table the 
-	 * GlideRecord was intialized for.
+	 * internally referenced GlideRecord instance was intialized for.
 	 * 
 	 * @param {string} strFieldName
 	 * Name of the field to check.
@@ -156,20 +160,29 @@ GlideRecordImpl.prototype = {
 
 
 	/**
-	 * Determines whether the current record has been inserted into the database or not.
-	 * 
-	 * **Note:** 
-	 * - This method returns true for any new record during a business rule,
-	 * or if the `newRecord()` method is used to initialize a record with default values and a unique Sys ID. 
-	 * - In all other cases, it returns false.
-	 * 
+	 * Determines whether the underlying record has been inserted into the database or not.
+	 *  
 	 * @returns {boolean}
-	 * `true` if record was not already inserted into the database, otherwise `false`.
+	 * `true` if the underlying record was not already inserted 
+	 * into the database, otherwise `false`.
 	 */
 	isNewRecord: function(
 
 	) {
 		return this.getGlideRecord().isNewRecord();
+	},
+
+
+	/**
+	 * Determines whether the underlying record was deleted.
+	 *  
+	 * @returns {boolean}
+	 * `true` if record was deleted, otherwise `false`.
+	 */
+	isDeletedRecord: function(
+
+	) {
+		return this._isDeleted === true;
 	},
 
 
