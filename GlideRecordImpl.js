@@ -1,114 +1,144 @@
-var GlideRecordImpl = Class.create();
-
 /**
  * This Script Include serves as a comprehensive facade around ServiceNow's 
- * out-of-the-box `GlideRecord` class, providing enhanced functionality, improved 
- * error handling and additional safety mechanisms. It can be used as a base class 
- * for your own data access and business objects.
+ * out-of-the-box `GlideRecord` and `GlideRecordSecire` classes, providing enhanced 
+ * functionality, improved error handling and additional safety mechanisms. It can 
+ * be used as a base class for your own data access and business objects.
  * 
  * **Please note:**
  * - Please bear in mind that this class is only a starting point and may need to be 
  * extended or adapted by you.
  * - The source code incorporates language elements from the ECMAScript 2021 engine, 
- * like `const` or string literals.
+ * like `class`, `const` or string literals.
  * - Only `GlideRecord` methods related to single-record access are wrapped. Bulk or 
  * list-based operations are intentionally excluded, as such scenarios are better 
  * addressed using a different design pattern, for example, the "Repository Pattern".
  * 
  * @author Maik Skoddow (https://www.linkedin.com/in/maik-skoddow)
- * @version 1.1.0
+ * @version 2.0.0
  * @see {@link https://www.linkedin.com/pulse/servicenow-deployment-pipeline-part-5-programming-worth-skoddow-huxee/}
  */
-GlideRecordImpl.prototype = {
-
+class GlideRecordImpl {
 	/**
 	 * This constructor is invoked to instantiate new objects from that class.
 	 * 
-	 * There are three different ways of constructing a new object:
+	 * There are three different ways of constructing a new object, and for the 
+	 * last two approaches, an additional Boolean parameter can be used to 
+	 * specify whether a “GlideRecordSecure” object should be used 
+	 * instead of a “GlideRecord” object.
 	 * 
 	 * @example
-	 * // (1) with an existing GlideRecord instance (e.g. in a Business Rule)
+	 * // (1) with an existing `GlideRecord` instance (e.g. in a Business Rule)
 	 * var objIncident = new GlideRecordImpl(current);
-	 * 
-	 * // (2) only with a table name (creates a new record that can be inserted)
+	 *
+	 * // (2.1) only with a table name (creates a new record that can be inserted)
 	 * var objIncident = new GlideRecordImpl('incident');
 	 * 
-	 * // (3) with table name and Sys ID (loads an existing record)
+	 * // (2.2) Just like (2.1) but with a `GlideRecordSecure` object
+	 * var objIncident = new GlideRecordImpl('incident', true);
+	 * 
+	 * // (3.1) with table name and Sys ID (retrieves an existing record)
 	 * var objIncident = new GlideRecordImpl('incident', 'b3af7471c31a6a90108c78edd40131aa');
+	 * 
+	 * // (3.2) Just like (3.1) but with a `GlideRecordSecure` object
+	 * var objIncident = new GlideRecordImpl('incident', 'b3af7471c31a6a90108c78edd40131aa', true);
 	 */
-	initialize: function(
-		param1, 
-		param2
+	constructor(
+		...args
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.initialize] ';
+		const OVERLOAD_REGISTRY = 
+			new Map([
+				['object',                (...args) => this._newWithGlideRecord(...args)],
+				['string',                (...args) => this._newWithTable(...args)],
+				['string,boolean',        (...args) => this._newWithTable(...args)],
+				['string,string',         (...args) => this._newWithTableAndSysID(...args)],
+				['string,string,boolean', (...args) => this._newWithTableAndSysID(...args)],
+			]);
 
-		this._grRecordInstance = null;
+		//build the constructor signature
+		let _strSignature = 
+			args.map(arg => 
+				Array.isArray(arg) ? 'array' : typeof arg
+			).join(',');
 
-		if (arguments.length === 0) {
+		//is a constructor method registered for the signature?
+		if (OVERLOAD_REGISTRY.has(_strSignature)) {
+			//invoke the registered constructor method
+			OVERLOAD_REGISTRY.get(_strSignature)(...args);
+		}
+		else { 
 			throw new TypeError(
-				METHOD_NAME +
-				'Object must be initialized with at least one parameter!'
+				`[${this.constructor.name}.constructor] ` + 
+				`Unsupported signature "${_strSignature}"`
 			);
 		}
+	}
 
 
-		if (typeof param1 === 'object' && 
-			(
-				param1.isNewRecord() === true || 
-				param1.isValidRecord() === true
-			)
+	_newWithGlideRecord(
+		objRecord = null,
+	) {
+		if ((objRecord instanceof GlideRecord || objRecord instanceof GlideRecordSecure) 
+			&&
+			(objRecord.isValidRecord() === true)
 		) {
-			if (typeof param2 === 'string' && param2 !== '') {
-				if (!gs.tableExists(param2)) {
-					throw new TypeError(
-						METHOD_NAME +
-						'"' + param2 + '" does not represent a valid ' +
-						'table name for that instance!'
-					);
-				}
-
-				if (param1.getTableName() !== param2) {
-					throw new TypeError(
-						METHOD_NAME +
-						'"' + param2 + '" does ' +
-						'not correspond to the table name of the passed GlideRecord!'
-					);
-				}
-			}
-
-			this._grRecordInstance = param1;
+			this._grRecordInstance = objRecord;
 		}
-		else if (typeof param1 === 'string') {
-			if (!gs.tableExists(param1)) {
-				throw new TypeError(
-					METHOD_NAME +
-					'"' + param1 + '" does not ' +
-					'represent a valid table name for that instance!'
-				);
-			}
-
-			this._grRecordInstance = new GlideRecord(param1);
-
-			//only table name passed, therefore initialize a new record
-			if (arguments.length === 1) {
-				this._wasNewRecord = true;
-
-				this._grRecordInstance.newRecord();
-			}
-			else if (typeof param2 === 'string') {
-				if (GlideStringUtil.isEligibleSysID(param2)) {
-					this._grRecordInstance.get(param2);
-				}
-			}
-		}
-
-		if (this._grRecordInstance === null) {
+		else {
 			throw new TypeError(
-				METHOD_NAME +
-				'Object not initialized with a valid GlideRecord instance!'
+				`[${this.constructor.name}.constructor] Passed object ` + 
+				`does not represent a valid GlideRecord instance!`
 			);
 		}
-	},
+	}
+
+
+	_newWithTable(
+		strTableName = 'x',
+		isSecure     = false,
+	) {
+		if (!gs.tableExists(strTableName)) {
+			throw new TypeError(
+				`[${this.constructor.name}.constructor] "${strTableName}" ` + 
+				`does not represent a valid table name for that instance!`
+			);
+		}
+
+		this._wasNewRecord     = true;
+		this._grRecordInstance = 
+			isSecure ? 
+				new GlideRecordSecure(strTableName) :
+				new GlideRecord(strTableName);
+
+		this._grRecordInstance.newRecord();
+	}
+
+
+	_newWithTableAndSysID(
+		strTableName = 'x',
+		strSysID     = 'x',
+		isSecure     = false,
+	) {
+		if (!gs.tableExists(strTableName)) {
+			throw new TypeError(
+				`[${this.constructor.name}.constructor] "${strTableName}" ` + 
+				`does not represent a valid table name for that instance!`
+			);
+		}
+
+		if (!GlideStringUtil.isEligibleSysID(strSysID)) {
+			throw new TypeError(
+				`[${this.constructor.name}.constructor] "${strSysID}" ` + 
+				`does not represent a valid Sys ID!`
+			);
+		}
+		
+		this._grRecordInstance = 
+			isSecure ? 
+				new GlideRecordSecure(strTableName) :
+				new GlideRecord(strTableName);
+
+		this._grRecordInstance.get(strSysID);
+	}
 
 
 	//-------------------------------------------------------------------------------------------
@@ -123,11 +153,9 @@ GlideRecordImpl.prototype = {
 	 * Some technical information about the GlideRecord instance that this object is 
 	 * the facade for.
 	 */
-	toString: function(
+	toString(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.toString] ';
-
 		return '' +
 			`Facade for a GlideRecord instance:\n` +
 			`Instantiated class: "${this.type}"\n` +
@@ -135,7 +163,7 @@ GlideRecordImpl.prototype = {
 			`Record Sys ID: ${this.getSysID()}\n` +
 			`Record is new: ${this.isNewRecord()}\n` +
 			`Record is deleted: ${this.isDeletedRecord()}\n`;
-	},
+	}
 
 
 	/**
@@ -144,11 +172,11 @@ GlideRecordImpl.prototype = {
 	 * @returns {GlideRecord}
 	 * Reference to the ServiceNow GlideRecord the object was initialized for.
 	 */
-	getGlideRecord: function(
+	getGlideRecord(
 		
 	) {
 		return this._grRecordInstance;
-	},
+	}
 
 
 	/**
@@ -157,13 +185,13 @@ GlideRecordImpl.prototype = {
 	 * @returns {boolean}
 	 * `true` if the referenced GlideRecord instance is valid, otherwise `false`.
 	 */
-	isValidRecord: function(
+	isValidRecord(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.isValidRecord] ';
-
-		return this._isDeleted !== true && this.getGlideRecord().isValidRecord();
-	},
+		return true &&
+				this._isDeleted !== true && 
+				this.getGlideRecord().isValidRecord();
+	}
 
 
 	/**
@@ -176,10 +204,10 @@ GlideRecordImpl.prototype = {
 	 * @returns {boolean}
 	 * `true` if the field is defined in the underlying table, otherwise `false`.
 	 */
-	isValidField: function(
+	isValidField(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.isValidField] ';
+		const METHOD_NAME = `[${this.constructor.name}.isValidField] `;
 
 		try {
 			this._testFieldName(METHOD_NAME, strFieldName);
@@ -189,7 +217,7 @@ GlideRecordImpl.prototype = {
 		catch (e) {
 			return false;
 		}
-	},
+	}
 
 
 	/**
@@ -199,11 +227,11 @@ GlideRecordImpl.prototype = {
 	 * `true` if the underlying record was not already inserted 
 	 * into the database, otherwise `false`.
 	 */
-	isNewRecord: function(
+	isNewRecord(
 
 	) {
 		return this.getGlideRecord().isNewRecord();
-	},
+	}
 
 
 	/**
@@ -212,11 +240,11 @@ GlideRecordImpl.prototype = {
 	 * @returns {boolean}
 	 * `true` if record was deleted, otherwise `false`.
 	 */
-	isDeletedRecord: function(
+	isDeletedRecord(
 
 	) {
 		return this._isDeleted === true;
-	},
+	}
 
 
 	/**
@@ -234,10 +262,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	canRead: function(
+	canRead(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.canRead] ';
+		const METHOD_NAME = `[${this.constructor.name}.canRead] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -248,7 +276,7 @@ GlideRecordImpl.prototype = {
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return this.getGlideRecord().getElement(strFieldName).canRead();
-	},
+	}
 
 
 	/**
@@ -266,10 +294,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	canWrite: function(
+	canWrite(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.canWrite] ';
+		const METHOD_NAME = `[${this.constructor.name}.canWrite] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -280,7 +308,7 @@ GlideRecordImpl.prototype = {
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return this.getGlideRecord().getElement(strFieldName).canWrite();
-	},
+	}
 
 
 	/**
@@ -298,10 +326,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	canCreate: function(
+	canCreate(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.canCreate] ';
+		const METHOD_NAME = `[${this.constructor.name}.canCreate] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -312,7 +340,7 @@ GlideRecordImpl.prototype = {
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return this.getGlideRecord().getElement(strFieldName).canCreate();
-	},
+	}
 
 
 	/**
@@ -330,10 +358,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	canDelete: function(
+	canDelete(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.canDelete] ';
+		const METHOD_NAME = `[${this.constructor.name}.canDelete] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -344,7 +372,7 @@ GlideRecordImpl.prototype = {
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return this.getGlideRecord().getElement(strFieldName).canDelete();
-	},
+	}
 
 
 	/**
@@ -356,15 +384,15 @@ GlideRecordImpl.prototype = {
 	 * @throws {Error}
 	 * If the underlying record already was deleted before.
 	 */
-	getTableName: function(
+	getTableName(
 		
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getTableName] ';
+		const METHOD_NAME = `[${this.constructor.name}.getTableName] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
 		return this.getGlideRecord().getTableName();
-	},
+	}
 
 
 	/**
@@ -376,15 +404,15 @@ GlideRecordImpl.prototype = {
 	 * @throws {Error}
 	 * If the underlying record already was deleted before.
 	 */
-	getSysID: function(
+	getSysID(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getSysID] ';
+		const METHOD_NAME = `[${this.constructor.name}.getSysID] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
 		return this.getGlideRecord().getValue('sys_id');
-	},
+	}
 
 
 	/**
@@ -396,15 +424,15 @@ GlideRecordImpl.prototype = {
 	 * @throws {Error}
 	 * If the underlying record already was deleted before.
 	 */
-	getUniqueValue: function(
+	getUniqueValue(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getUniqueValue] ';
+		const METHOD_NAME = `[${this.constructor.name}.getUniqueValue] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
 		return this.getGlideRecord().getUniqueValue();
-	},
+	}
 
 
 	/**
@@ -419,10 +447,10 @@ GlideRecordImpl.prototype = {
 	 * @throws {Error}
 	 * If the underlying record already was deleted before.
 	 */
-	getLink: function(
+	getLink(
 		noStack
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getLink] ';
+		const METHOD_NAME = `[${this.constructor.name}.getLink] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -434,7 +462,7 @@ GlideRecordImpl.prototype = {
 		}
 
 		return this.getGlideRecord().getLink(noStack);
-	},
+	}
 
 
 	/**
@@ -451,10 +479,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	getDisplayValue: function(
+	getDisplayValue(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getDisplayValue] ';
+		const METHOD_NAME = `[${this.constructor.name}.getDisplayValue] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -465,7 +493,7 @@ GlideRecordImpl.prototype = {
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return String(this.getGlideRecord().getElement(strFieldName).getDisplayValue());
-	},
+	}
 
 
 	/**
@@ -488,16 +516,16 @@ GlideRecordImpl.prototype = {
 	 * {@link https://www.servicenow.com/docs/csh?topicname=r_FieldTypes.html&version=latest} 
 	 * for a list of all types.
 	 */
-	getFieldType: function(
+	getFieldType(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getFieldType] ';
+		const METHOD_NAME = `[${this.constructor.name}.getFieldType] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return this.getGlideRecord().getElement(strFieldName).getED().getInternalType();
-	},
+	}
 
 
 
@@ -520,10 +548,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	getGlideObject: function(
+	getGlideObject(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getGlideObject] ';
+		const METHOD_NAME = `[${this.constructor.name}.getGlideObject] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
@@ -531,7 +559,7 @@ GlideRecordImpl.prototype = {
 		return this.hasValue(strFieldName) ?
 				this.getGlideRecord().getElement(strFieldName).getGlideObject() || null :
 				null;
-	},
+	}
 
 
 	/**
@@ -554,10 +582,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	getRefRecord: function(
+	getRefRecord(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getRefRecord] ';
+		const METHOD_NAME = `[${this.constructor.name}.getRefRecord] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
@@ -570,7 +598,7 @@ GlideRecordImpl.prototype = {
 		}
 
 		return this.getGlideRecord().getElement(strFieldName).getRefRecord();
-	},
+	}
 
 
 	/**
@@ -594,10 +622,10 @@ GlideRecordImpl.prototype = {
 	 * - For field-based retrieval: 
 	 * If value in `objParam` does not represent a valid database column.
 	 */
-	getLabel: function(
+	getLabel(
 		objParam
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getLabel] ';
+		const METHOD_NAME = `[${this.constructor.name}.getLabel] `;
 
 		this._testIsDeleted(METHOD_NAME);
 
@@ -612,7 +640,7 @@ GlideRecordImpl.prototype = {
 		this._testFieldName(METHOD_NAME, objParam);
 
 		return this.getGlideRecord().getElement(objParam).getLabel();			
-	},
+	}
 	
 	
 	/**
@@ -631,16 +659,16 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	hasValue: function(
+	hasValue(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.hasValue] ';
+		const METHOD_NAME = `[${this.constructor.name}.hasValue] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return !this.getGlideRecord().getElement(strFieldName).nil();
-	},
+	}
 
 
 	/**
@@ -659,16 +687,16 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	getValue: function(
+	getValue(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getValue] ';
+		const METHOD_NAME = `[${this.constructor.name}.getValue] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return String(this.getGlideRecord().getValue(strFieldName) || '').trim();
-	},
+	}
 
 
 	/**
@@ -688,10 +716,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	getDecryptedValue: function(
+	getDecryptedValue(
 		strFieldName
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.getDecryptedValue] ';
+		const METHOD_NAME = `[${this.constructor.name}.getDecryptedValue] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldName(METHOD_NAME, strFieldName);
@@ -704,7 +732,7 @@ GlideRecordImpl.prototype = {
 		}
 
 		return this.getGlideRecord().getElement(strFieldName).getDecryptedValue();
-	},
+	}
 
 
 	/**
@@ -725,11 +753,11 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
-	setValue: function(
+	setValue(
 		strFieldName, 
 		objFieldValue
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.setValue] ';
+		const METHOD_NAME = `[${this.constructor.name}.setValue] `;
 
 		this._testIsDeleted(METHOD_NAME);
 		this._testFieldValue(METHOD_NAME, strFieldName, objFieldValue);
@@ -747,7 +775,7 @@ GlideRecordImpl.prototype = {
 				this.getGlideRecord().getElement(strFieldName).setValue(objFieldValue);
 				break;
 		}		
-	},
+	}
 
 
 	/**
@@ -760,16 +788,16 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record already was inserted before.
 	 * - If the underlying record already was deleted before.
 	 */
-	insert: function(
+	insert(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.insert] ';
+		const METHOD_NAME = `[${this.constructor.name}.insert] `;
 
 		this._testIsInserted(METHOD_NAME);
 		this._testIsDeleted(METHOD_NAME);
 		
 		return this.getGlideRecord().insert();
-	},
+	}
 
 
 	/**
@@ -782,16 +810,16 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record was not inserted before.
 	 * - If the underlying record already was deleted before.
 	 */
-	update: function(
+	update(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.update] ';
+		const METHOD_NAME = `[${this.constructor.name}.update] `;
 
 		this._testIsNotInserted(METHOD_NAME);
 		this._testIsDeleted(METHOD_NAME);
 
 		return this.getGlideRecord().update();
-	},
+	}
 
 
 	/**
@@ -804,10 +832,10 @@ GlideRecordImpl.prototype = {
 	 * - If the underlying record was not inserted before.
 	 * - If the underlying record already was deleted before.
 	 */
-	deleteRecord: function(
+	deleteRecord(
 
 	) {
-		const METHOD_NAME = '[GlideRecordImpl.deleteRecord] ';
+		const METHOD_NAME = `[${this.constructor.name}.deleteRecord] `;
 
 		this._testIsNotInserted(METHOD_NAME);
 		this._testIsDeleted(METHOD_NAME);
@@ -831,7 +859,7 @@ GlideRecordImpl.prototype = {
 		this._isDeleted = _grRecord.deleteRecord();
 
 		return this._isDeleted;
-	},
+	}
 
 
 	//-------------------------------------------------------------------------------------------
@@ -851,7 +879,7 @@ GlideRecordImpl.prototype = {
 	 * @throws {Error}
 	 * If the specified field name does not represent a valid database column.
 	 */	
-	_testFieldName: function(
+	_testFieldName(
 		strMethodName,
 		strFieldName
 	) {
@@ -876,10 +904,10 @@ GlideRecordImpl.prototype = {
 				`for table "${this.getTableName()}"!`
 			);
 		}
-	},
+	}
 
 
-	_testFieldValue: function(
+	_testFieldValue(
 		strMethodName,
 		strFieldName,
 		strFieldValue
@@ -892,10 +920,10 @@ GlideRecordImpl.prototype = {
 				`No value for the field ${strFieldName} was passed!`
 			);
 		}		
-	},
+	}
 
 
-	_testIsInserted: function(
+	_testIsInserted(
 		strMethodName
 	) {
 		if (!this.isNewRecord()) {
@@ -904,10 +932,10 @@ GlideRecordImpl.prototype = {
 				`Record with Sys ID = "${this.getSysID()}" already exists in the database!`
 			);
 		}
-	},
+	}
 
 
-	_testIsNotInserted: function(
+	_testIsNotInserted(
 		strMethodName
 	) {
 		if (this.isNewRecord()) {
@@ -915,10 +943,10 @@ GlideRecordImpl.prototype = {
 				strMethodName + 'The record was not inserted before yet!'
 			);
 		}
-	},
+	}
 
 
-	_testIsDeleted: function(
+	_testIsDeleted(
 		strMethodName
 	) {
 		if (this._isDeleted === true) {
@@ -927,7 +955,5 @@ GlideRecordImpl.prototype = {
 				`already was deleted from table "${this.getTableName()}"!`
 			);
 		}
-	},
-
-	type: 'GlideRecordImpl'
-};
+	}
+}
