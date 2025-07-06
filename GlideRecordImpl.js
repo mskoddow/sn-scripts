@@ -14,7 +14,7 @@
  * addressed using a different design pattern, for example, the "Repository Pattern".
  * 
  * @author Maik Skoddow (https://www.linkedin.com/in/maik-skoddow)
- * @version 2.0.0
+ * @version 2.0.1
  * @see {@link https://www.linkedin.com/pulse/servicenow-deployment-pipeline-part-5-programming-worth-skoddow-huxee/}
  */
 class GlideRecordImpl {
@@ -23,8 +23,13 @@ class GlideRecordImpl {
 	 * 
 	 * There are three different ways of constructing a new object, and for the 
 	 * last two approaches, an additional Boolean parameter can be used to 
-	 * specify whether a “GlideRecordSecure” object should be used 
-	 * instead of a “GlideRecord” object.
+	 * specify whether a `GlideRecordSecure` object should be used 
+	 * instead of a `GlideRecord` object.
+     * @param {...(GlideRecord|GlideRecordSecure|string|boolean)} args
+     * Constructor arguments (see above)
+	 * 
+     * @throws {TypeError} 
+	 * If the signature is not supported or arguments are invalid.
 	 * 
 	 * @example
 	 * // (1) with an existing `GlideRecord` instance (e.g. in a Business Rule)
@@ -74,6 +79,15 @@ class GlideRecordImpl {
 	}
 
 
+	/**
+     * @private
+     * Initializes with an existing `GlideRecord` or `GlideRecordSecure` instance.
+     * 
+     * @param {GlideRecord|GlideRecordSecure|null} objRecord
+	 * 
+     * @throws {TypeError} 
+	 * If objRecord is not a valid `GlideRecord` or `GlideRecordSecure` instance.
+     */
 	_newWithGlideRecord(
 		objRecord = null,
 	) {
@@ -92,6 +106,21 @@ class GlideRecordImpl {
 	}
 
 
+    /**
+     * @private
+     * Initializes a new `GlideRecord` or `GlideRecordSecure` record based 
+	 * on the given table name.
+     * 
+     * @param {string} strTableName
+	 * A valid table name for that instance.
+	 * 
+     * @param {boolean} [isSecure=false]
+	 * If `true` a `GlideRecordSecure` object is instantiated, otherwise 
+	 * a `GlideRecord` object.
+	 * 
+     * @throws {TypeError} 
+	 * If table name is invalid.
+     */
 	_newWithTable(
 		strTableName = 'x',
 		isSecure     = false,
@@ -113,6 +142,24 @@ class GlideRecordImpl {
 	}
 
 
+    /**
+     * @private
+     * Retrieves an existing `GlideRecord` or `GlideRecordSecure` record based 
+	 * on the given table name and Sys ID.
+     * 
+     * @param {string} strTableName
+	 * A valid table name for that instance.
+	 * 
+	 * @param {string} strSysID
+	 * A valid ServiceNow Sys ID.
+	 * 
+     * @param {boolean} [isSecure=false]
+	 * If `true` a `GlideRecordSecure` object is instantiated, otherwise 
+	 * a `GlideRecord` object.
+	 * 
+     * @throws {TypeError} 
+	 * If table name or Sys ID is invalid.
+     */
 	_newWithTableAndSysID(
 		strTableName = 'x',
 		strSysID     = 'x',
@@ -150,7 +197,7 @@ class GlideRecordImpl {
 	 * typically for debugging, logging, or display purposes.
 	 * 
 	 * @returns {string}
-	 * Some technical information about the GlideRecord instance that this object is 
+	 * Some technical information about the `GlideRecord` instance that this object is 
 	 * the facade for.
 	 */
 	toString(
@@ -167,10 +214,12 @@ class GlideRecordImpl {
 
 
 	/**
-	 * Returns the internally stored reference to the GlideRecord record.
+	 * Returns the internally stored reference to the 
+	 * `GlideRecord` or `GlideRecordSecure` instance.
 	 * 
-	 * @returns {GlideRecord}
-	 * Reference to the ServiceNow GlideRecord the object was initialized for.
+	 * @returns {GlideRecord|GlideRecordSecure}
+	 * Reference to the ServiceNow `GlideRecord` or `GlideRecordSecure` 
+	 * instance the object was initialized for.
 	 */
 	getGlideRecord(
 		
@@ -180,10 +229,10 @@ class GlideRecordImpl {
 
 
 	/**
-	 * Determines if the referenced GlideRecord instance is valid.
+	 * Determines if the referenced `GlideRecord` instance is valid.
 	 * 
 	 * @returns {boolean}
-	 * `true` if the referenced GlideRecord instance is valid, otherwise `false`.
+	 * `true` if the referenced `GlideRecord` instance is valid, otherwise `false`.
 	 */
 	isValidRecord(
 
@@ -196,7 +245,8 @@ class GlideRecordImpl {
 
 	/**
 	 * Determines if the specified field is defined in the table the 
-	 * internally referenced GlideRecord instance was intialized for.
+	 * internally referenced `GlideRecord` or `GlideRecordSecure` instance was 
+	 * intialized for.
 	 * 
 	 * @param {string} strFieldName
 	 * Name of the field to check.
@@ -376,10 +426,10 @@ class GlideRecordImpl {
 
 
 	/**
-	 * Retrieves the name of the underlying table that the GlideRecord was initialized for.
+	 * Retrieves the name of the underlying table that the `GlideRecord` was initialized for.
 	 * 
 	 * @returns {string}
-	 * Name of the underlying table that the GlideRecord was initialized for.
+	 * Name of the underlying table that the `GlideRecord` was initialized for.
 	 * 
 	 * @throws {Error}
 	 * If the underlying record already was deleted before.
@@ -563,16 +613,16 @@ class GlideRecordImpl {
 
 
 	/**
-	 * Returns a GlideRecord object for a given reference field. 
+	 * Returns a `GlideRecord` object for a given reference field. 
 	 * 
 	 * **Warning:** If the reference element does not contain a value, 
-	 * it returns an empty GlideRecord object, not a NULL object.
+	 * it returns an empty `GlideRecord` object, not a NULL object.
 	 * 
 	 * @param {string} strFieldName
 	 * Name of the corresponding database column.
 	 * 
 	 * @returns {GlideRecord}
-	 * An instance of a GlideRecord object - either fully initialized or empty.
+	 * An instance of a `GlideRecord` object - either fully initialized or empty.
 	 * 
 	 * @throws {TypeError}
 	 * - If value in `strFieldName` does not exists or is empty.
