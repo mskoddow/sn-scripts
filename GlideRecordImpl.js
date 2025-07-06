@@ -14,7 +14,7 @@
  * addressed using a different design pattern, for example, the "Repository Pattern".
  * 
  * @author Maik Skoddow (https://www.linkedin.com/in/maik-skoddow)
- * @version 2.0.1
+ * @version 2.0.0
  * @see {@link https://www.linkedin.com/pulse/servicenow-deployment-pipeline-part-5-programming-worth-skoddow-huxee/}
  */
 class GlideRecordImpl {
@@ -25,10 +25,10 @@ class GlideRecordImpl {
 	 * last two approaches, an additional Boolean parameter can be used to 
 	 * specify whether a `GlideRecordSecure` object should be used 
 	 * instead of a `GlideRecord` object.
-     * @param {...(GlideRecord|GlideRecordSecure|string|boolean)} args
-     * Constructor arguments (see above)
+	 * @param {...(GlideRecord|GlideRecordSecure|string|boolean)} args
+	 * Constructor arguments (see above)
 	 * 
-     * @throws {TypeError} 
+	 * @throws {TypeError} 
 	 * If the signature is not supported or arguments are invalid.
 	 * 
 	 * @example
@@ -50,18 +50,18 @@ class GlideRecordImpl {
 	constructor(
 		...args
 	) {
-		const OVERLOAD_REGISTRY = 
+		const OVERLOAD_REGISTRY =
 			new Map([
-				['object',                (...args) => this._newWithGlideRecord(...args)],
-				['string',                (...args) => this._newWithTable(...args)],
-				['string,boolean',        (...args) => this._newWithTable(...args)],
-				['string,string',         (...args) => this._newWithTableAndSysID(...args)],
+				['object', (...args) => this._newWithGlideRecord(...args)],
+				['string', (...args) => this._newWithTable(...args)],
+				['string,boolean', (...args) => this._newWithTable(...args)],
+				['string,string', (...args) => this._newWithTableAndSysID(...args)],
 				['string,string,boolean', (...args) => this._newWithTableAndSysID(...args)],
 			]);
 
 		//build the constructor signature
-		let _strSignature = 
-			args.map(arg => 
+		let _strSignature =
+			args.map(arg =>
 				Array.isArray(arg) ? 'array' : typeof arg
 			).join(',');
 
@@ -70,9 +70,9 @@ class GlideRecordImpl {
 			//invoke the registered constructor method
 			OVERLOAD_REGISTRY.get(_strSignature)(...args);
 		}
-		else { 
+		else {
 			throw new TypeError(
-				`[${this.constructor.name}.constructor] ` + 
+				`[${this.constructor.name}.constructor] ` +
 				`Unsupported signature "${_strSignature}"`
 			);
 		}
@@ -80,18 +80,18 @@ class GlideRecordImpl {
 
 
 	/**
-     * @private
-     * Initializes with an existing `GlideRecord` or `GlideRecordSecure` instance.
-     * 
-     * @param {GlideRecord|GlideRecordSecure|null} objRecord
+	 * @private
+	 * Initializes with an existing `GlideRecord` or `GlideRecordSecure` instance.
 	 * 
-     * @throws {TypeError} 
+	 * @param {GlideRecord|GlideRecordSecure|null} objRecord
+	 * 
+	 * @throws {TypeError} 
 	 * If objRecord is not a valid `GlideRecord` or `GlideRecordSecure` instance.
-     */
+	 */
 	_newWithGlideRecord(
 		objRecord = null,
 	) {
-		if ((objRecord instanceof GlideRecord || objRecord instanceof GlideRecordSecure) 
+		if ((objRecord instanceof GlideRecord || objRecord instanceof GlideRecordSecure)
 			&&
 			(objRecord.isValidRecord() === true)
 		) {
@@ -99,42 +99,42 @@ class GlideRecordImpl {
 		}
 		else {
 			throw new TypeError(
-				`[${this.constructor.name}.constructor] Passed object ` + 
+				`[${this.constructor.name}.constructor] Passed object ` +
 				`does not represent a valid GlideRecord instance!`
 			);
 		}
 	}
 
 
-    /**
-     * @private
-     * Initializes a new `GlideRecord` or `GlideRecordSecure` record based 
+	/**
+	 * @private
+	 * Initializes a new `GlideRecord` or `GlideRecordSecure` record based 
 	 * on the given table name.
-     * 
-     * @param {string} strTableName
+	 * 
+	 * @param {string} strTableName
 	 * A valid table name for that instance.
 	 * 
-     * @param {boolean} [isSecure=false]
+	 * @param {boolean} [isSecure=false]
 	 * If `true` a `GlideRecordSecure` object is instantiated, otherwise 
 	 * a `GlideRecord` object.
 	 * 
-     * @throws {TypeError} 
+	 * @throws {TypeError} 
 	 * If table name is invalid.
-     */
+	 */
 	_newWithTable(
 		strTableName = 'x',
-		isSecure     = false,
+		isSecure = false,
 	) {
 		if (!gs.tableExists(strTableName)) {
 			throw new TypeError(
-				`[${this.constructor.name}.constructor] "${strTableName}" ` + 
+				`[${this.constructor.name}.constructor] "${strTableName}" ` +
 				`does not represent a valid table name for that instance!`
 			);
 		}
 
-		this._wasNewRecord     = true;
-		this._grRecordInstance = 
-			isSecure ? 
+		this._wasNewRecord = true;
+		this._grRecordInstance =
+			isSecure ?
 				new GlideRecordSecure(strTableName) :
 				new GlideRecord(strTableName);
 
@@ -142,45 +142,45 @@ class GlideRecordImpl {
 	}
 
 
-    /**
-     * @private
-     * Retrieves an existing `GlideRecord` or `GlideRecordSecure` record based 
+	/**
+	 * @private
+	 * Retrieves an existing `GlideRecord` or `GlideRecordSecure` record based 
 	 * on the given table name and Sys ID.
-     * 
-     * @param {string} strTableName
+	 * 
+	 * @param {string} strTableName
 	 * A valid table name for that instance.
 	 * 
 	 * @param {string} strSysID
 	 * A valid ServiceNow Sys ID.
 	 * 
-     * @param {boolean} [isSecure=false]
+	 * @param {boolean} [isSecure=false]
 	 * If `true` a `GlideRecordSecure` object is instantiated, otherwise 
 	 * a `GlideRecord` object.
 	 * 
-     * @throws {TypeError} 
+	 * @throws {TypeError} 
 	 * If table name or Sys ID is invalid.
-     */
+	 */
 	_newWithTableAndSysID(
 		strTableName = 'x',
-		strSysID     = 'x',
-		isSecure     = false,
+		strSysID = 'x',
+		isSecure = false,
 	) {
 		if (!gs.tableExists(strTableName)) {
 			throw new TypeError(
-				`[${this.constructor.name}.constructor] "${strTableName}" ` + 
+				`[${this.constructor.name}.constructor] "${strTableName}" ` +
 				`does not represent a valid table name for that instance!`
 			);
 		}
 
 		if (!GlideStringUtil.isEligibleSysID(strSysID)) {
 			throw new TypeError(
-				`[${this.constructor.name}.constructor] "${strSysID}" ` + 
+				`[${this.constructor.name}.constructor] "${strSysID}" ` +
 				`does not represent a valid Sys ID!`
 			);
 		}
-		
-		this._grRecordInstance = 
-			isSecure ? 
+
+		this._grRecordInstance =
+			isSecure ?
 				new GlideRecordSecure(strTableName) :
 				new GlideRecord(strTableName);
 
@@ -222,7 +222,7 @@ class GlideRecordImpl {
 	 * instance the object was initialized for.
 	 */
 	getGlideRecord(
-		
+
 	) {
 		return this._grRecordInstance;
 	}
@@ -238,8 +238,8 @@ class GlideRecordImpl {
 
 	) {
 		return true &&
-				this._isDeleted !== true && 
-				this.getGlideRecord().isValidRecord();
+			this._isDeleted !== true &&
+			this.getGlideRecord().isValidRecord();
 	}
 
 
@@ -435,7 +435,7 @@ class GlideRecordImpl {
 	 * If the underlying record already was deleted before.
 	 */
 	getTableName(
-		
+
 	) {
 		const METHOD_NAME = `[${this.constructor.name}.getTableName] `;
 
@@ -607,8 +607,8 @@ class GlideRecordImpl {
 		this._testFieldName(METHOD_NAME, strFieldName);
 
 		return this.hasValue(strFieldName) ?
-				this.getGlideRecord().getElement(strFieldName).getGlideObject() || null :
-				null;
+			this.getGlideRecord().getElement(strFieldName).getGlideObject() || null :
+			null;
 	}
 
 
@@ -642,7 +642,7 @@ class GlideRecordImpl {
 
 		if (this.getFieldType(strFieldName) !== 'reference') {
 			throw new TypeError(
-				METHOD_NAME + 
+				METHOD_NAME +
 				`"${strFieldName}" does not represent a reference field!`
 			);
 		}
@@ -682,17 +682,17 @@ class GlideRecordImpl {
 		//1st option: retrieve the table label - optionally in the plural form
 		if (arguments.length === 0 || typeof objParam === 'boolean') {
 			return objParam === true ?
-				String(this.getGlideRecord().getPlural()) : 
+				String(this.getGlideRecord().getPlural()) :
 				String(this.getGlideRecord().getClassDisplayValue());
 		}
 
 		//2nd option: retrieve a field's label
 		this._testFieldName(METHOD_NAME, objParam);
 
-		return this.getGlideRecord().getElement(objParam).getLabel();			
+		return this.getGlideRecord().getElement(objParam).getLabel();
 	}
-	
-	
+
+
 	/**
 	 * Determines if the specified field is defined has a value. 
 	 * 
@@ -760,7 +760,7 @@ class GlideRecordImpl {
 	 * 
 	 * @throws {TypeError}
 	 * - If value in `strFieldName` does not exists or is empty.
- 	 * - If field is not of type "password2".
+	   * - If field is not of type "password2".
 	 * 
 	 * @throws {Error}
 	 * - If the underlying record already was deleted before.
@@ -776,7 +776,7 @@ class GlideRecordImpl {
 
 		if (this.getFieldType(strFieldName) !== 'password2') {
 			throw new TypeError(
-				METHOD_NAME + 
+				METHOD_NAME +
 				`"${strFieldName}" does not represent a Password2 field!`
 			);
 		}
@@ -797,14 +797,14 @@ class GlideRecordImpl {
 	 * 
 	 * @throws {TypeError}
 	 * - If value in `strFieldName` does not exists or is empty.
- 	 * - If value in `objFieldValue` does not exists or is null.
+	   * - If value in `objFieldValue` does not exists or is null.
 	 * 
 	 * @throws {Error}
 	 * - If the underlying record already was deleted before.
 	 * - If the specified field name does not represent a valid database column. 
 	 */
 	setValue(
-		strFieldName, 
+		strFieldName,
 		objFieldValue
 	) {
 		const METHOD_NAME = `[${this.constructor.name}.setValue] `;
@@ -824,7 +824,7 @@ class GlideRecordImpl {
 			default:
 				this.getGlideRecord().getElement(strFieldName).setValue(objFieldValue);
 				break;
-		}		
+		}
 	}
 
 
@@ -845,7 +845,7 @@ class GlideRecordImpl {
 
 		this._testIsInserted(METHOD_NAME);
 		this._testIsDeleted(METHOD_NAME);
-		
+
 		return this.getGlideRecord().insert();
 	}
 
@@ -899,7 +899,7 @@ class GlideRecordImpl {
 
 			if (!_grRecord.get(this.getSysID())) {
 				throw new Error(
-					METHOD_NAME + 
+					METHOD_NAME +
 					`No record exists for Sys ID = "${this.getSysID()}" ` +
 					`at table "${this.getTableName()}"!`
 				);
@@ -928,7 +928,7 @@ class GlideRecordImpl {
 	 * 
 	 * @throws {Error}
 	 * If the specified field name does not represent a valid database column.
-	 */	
+	 */
 	_testFieldName(
 		strMethodName,
 		strFieldName
@@ -949,7 +949,7 @@ class GlideRecordImpl {
 
 		if (!this.getGlideRecord().isValidField(_strFieldName)) {
 			throw new Error(
-				strMethodName + 
+				strMethodName +
 				`"${_strFieldName}" is not a valid field name ` +
 				`for table "${this.getTableName()}"!`
 			);
@@ -966,10 +966,10 @@ class GlideRecordImpl {
 
 		if (typeof strFieldValue === 'undefined' || strFieldValue === null) {
 			throw new TypeError(
-				strMethodName + 
+				strMethodName +
 				`No value for the field ${strFieldName} was passed!`
 			);
-		}		
+		}
 	}
 
 
@@ -978,7 +978,7 @@ class GlideRecordImpl {
 	) {
 		if (!this.isNewRecord()) {
 			throw new Error(
-				strMethodName + 
+				strMethodName +
 				`Record with Sys ID = "${this.getSysID()}" already exists in the database!`
 			);
 		}
