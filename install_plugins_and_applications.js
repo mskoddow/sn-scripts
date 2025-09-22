@@ -80,9 +80,11 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun, loadDemoData) {
         );
         if (!_dryRun) {
             gs.info(
-                new sn_appclient.AppPluginInstallation().validateAndBatchInstall(
-                    'PDI Installation', 
-                    _objToBeInstalled
+                JSON.stringify(
+                    new sn_appclient.AppPluginInstallation().validateAndBatchInstall(
+                        'PDI Installation',
+                        _objToBeInstalled
+                    )
                 )
             );
             gs.info(
@@ -99,7 +101,7 @@ function installPluginsAndApplications(arrToBeInstalled, dryRun, loadDemoData) {
 installPluginsAndApplications([
     'com.glide.messaging.awa', //Conversational Messaging
     'com.snc.incident.mim', //Major Incident Management
-    'com.snc.change_management.risk_assessment', //Change Management - Risk Assesment
+    'com.snc.change_management.risk_assessment', //Change Management - Risk Assessment
     'com.snc.change_management.success_probability', //Change Management - Success Probability
     'com.snc.pa.change', //Performance Analytics Content Pack for Change Management
     'com.snc.incident.awa', //Advanced Work Assignment for Incidents
