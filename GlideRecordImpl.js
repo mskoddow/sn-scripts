@@ -1,6 +1,6 @@
 /**
  * This Script Include serves as a comprehensive facade around ServiceNow's 
- * out-of-the-box `GlideRecord` and `GlideRecordSecire` classes, providing enhanced 
+ * out-of-the-box `GlideRecord` and `GlideRecordSecure` classes, providing enhanced 
  * functionality, improved error handling and additional safety mechanisms. It can 
  * be used as a base class for your own data access and business objects.
  * 
