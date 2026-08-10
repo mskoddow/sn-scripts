@@ -8,7 +8,7 @@ while (_grSearchGroup.next()) {
     var _objArrayUtil        = new ArrayUtil();
 
     _grDictionary.addEncodedQuery(
-            'internal_type.nameINscript,condition,condition_string,script_plain,XML,script_server' +
+            'internal_type.nameINscript,conditions,condition_string,script_plain,XML,script_server' +
         '^NQ' +
             'elementSTARTSWITHscript' +
                 '^ORelementLIKE_script' +
